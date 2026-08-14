@@ -1,0 +1,82 @@
+#include <stdio.h>
+#include <string.h>
+
+#define MAX 100
+
+int main()
+{
+    char input[MAX];
+    int i;
+
+    while (1)
+    {
+        printf("myshell> ");
+
+        i = 0;
+
+        while (1)
+        {
+            char ch = getchar();
+
+            /* Enter key */
+            if (ch == '\n')
+            {
+                input[i] = '\0';
+                printf("\n");
+                break;
+            }
+
+            /* Backspace */
+            else if (ch == '\b' || ch == 127)
+            {
+                if (i > 0)
+                {
+                    i--;
+                    printf("\b \b");
+                    fflush(stdout);
+                }
+              }
+
+            /* Store normal characters */
+            else if (i < MAX - 1)
+            {
+                input[i] = ch;
+                i++;
+                putchar(ch);
+                fflush(stdout);
+            }
+        }
+
+        /* Exit condition */
+        if (strcmp(input, "exit") == 0)
+        {
+            printf("Exiting shell...\n");
+            break;
+        }
+
+        /* Empty input */
+        if (strlen(input) == 0)
+        {
+            continue;
+        }
+
+        /* Example commands */
+        if (strcmp(input, "hello") == 0)
+        {
+            printf("Hello! Welcome to my shell.\n");
+        }
+        else if (strcmp(input, "help") == 0)
+        {
+            printf("Available commands:\n");
+            printf("hello\n");
+            printf("help\n");
+            printf("exit\n");
+        }    
+         else
+        {
+            printf("Command not found: %s\n", input);
+        }
+    }
+
+    return 0;
+}
