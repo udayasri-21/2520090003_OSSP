@@ -1,0 +1,145 @@
+#include <stdio.h>
+#include <unistd.h>
+#include <termios.h>
+#include <string.h>
+
+#define MAX_HISTORY 10
+#define MAX_BUFFER 100
+
+char history[MAX_HISTORY][MAX_BUFFER];
+int history_count = 0;
+
+void enable_raw_mode(struct termios *old)
+{
+    struct termios new;
+
+    tcgetattr(STDIN_FILENO, old);
+    new = *old;
+
+    new.c_lflag &= ~(ICANON | ECHO);
+
+    tcsetattr(STDIN_FILENO, TCSANOW, &new);
+}
+
+void disable_raw_mode(struct termios *old)
+{
+    tcsetattr(STDIN_FILENO, TCSANOW, old);
+}
+
+int main()
+{
+    char buffer[MAX_BUFFER];
+    int len = 0;
+    int history_pos;
+    char ch;
+    struct termios old;
+
+    enable_raw_mode(&old);
+
+    printf("Simple Command History\n");
+    printf("Type commands and press Enter.\n");
+    printf("Use UP/DOWN arrows to recall commands.\n");
+    printf("Type exit to quit.\n\n");
+
+    while (1)
+    {
+        printf("> ");
+        fflush(stdout);
+
+        len = 0;
+        history_pos = history_count;
+
+        while (1)
+        {
+            read(STDIN_FILENO, &ch, 1);
+
+            if (ch == '\n' || ch == '\r')
+            {
+                buffer[len] = '\0';
+                printf("\n");
+
+                if (len > 0)
+                {
+                    if (history_count < MAX_HISTORY)
+                    {
+                        strcpy(history[history_count], buffer);
+                        history_count++;
+                    }
+                }
+
+                if (strcmp(buffer, "exit") == 0)
+                {
+                    disable_raw_mode(&old);
+                    return 0;
+                }
+
+                break;
+            }
+
+            /* Backspace */
+            if (ch == 127)
+            {
+                if (len > 0)
+                {
+                    len--;
+                    buffer[len] = '\0';
+                    printf("\b \b");
+                    fflush(stdout);
+                }
+            }
+
+            /* Escape sequence */
+            else if (ch == 27)
+            {
+                char seq[2];
+
+                read(STDIN_FILENO, &seq[0], 1);
+                read(STDIN_FILENO, &seq[1], 1);
+
+                /* UP arrow */
+                if (seq[0] == '[' && seq[1] == 'A')
+                {
+                    if (history_pos > 0)
+                    {
+                        history_pos--;
+                        strcpy(buffer, history[history_pos]);
+                        len = strlen(buffer);
+
+                        printf("\r> %-99s", buffer);
+                        printf("\r> %s", buffer);
+                        fflush(stdout);
+                    }
+                }
+
+                /* DOWN arrow */
+                else if (seq[0] == '[' && seq[1] == 'B')
+                {
+                    if (history_pos < history_count - 1)
+                    {
+                        history_pos++;
+                        strcpy(buffer, history[history_pos]);
+                        len = strlen(buffer);
+
+                        printf("\r> %-99s", buffer);
+                        printf("\r> %s", buffer);
+                        fflush(stdout);
+                    }
+                }
+            }
+
+            /* Normal character */
+            else
+            {
+                if (len < MAX_BUFFER - 1)
+                {
+                    buffer[len++] = ch;
+                    write(STDOUT_FILENO, &ch, 1);
+                }
+            }
+        }
+    }
+
+    disable_raw_mode(&old);
+
+    return 0;
+}
