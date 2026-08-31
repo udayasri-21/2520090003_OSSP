@@ -1,0 +1,26 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX 100
+
+int main()
+{
+    char input[MAX];
+    char *token;
+
+    printf("Enter a command: ");
+    fgets(input, MAX, stdin);
+
+    printf("\nTokens:\n");
+
+    token = strtok(input, " \t\n");
+
+    while (token != NULL)
+    {
+        printf("Token: %s\n", token);
+        token = strtok(NULL, " \t\n");
+    }
+
+    return 0;
+}
