@@ -1,0 +1,55 @@
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <string.h>
+#include <time.h>
+
+int main()
+{
+    int fd[2];
+    pid_t pid;
+    char buffer[100];
+    char data[] = "Hello from Parent Producer";
+
+    struct timespec start, end;
+    double time_taken;
+
+    pipe(fd);
+
+    pid = fork();
+
+    if (pid == 0)
+    {
+        // Child - Consumer
+        close(fd[1]);
+
+        read(fd[0], buffer, sizeof(buffer));
+
+        printf("Child (Consumer) received: %s\n", buffer);
+
+        close(fd[0]);
+    }
+    else
+    {
+        // Parent - Producer
+        close(fd[0]);
+
+        clock_gettime(CLOCK_MONOTONIC, &start);
+
+        write(fd[1], data, strlen(data) + 1);
+
+        clock_gettime(CLOCK_MONOTONIC, &end);
+
+        time_taken = (end.tv_sec - start.tv_sec) * 1e6;
+        time_taken += (end.tv_nsec - start.tv_nsec) / 1000.0;
+
+        printf("Parent (Producer) sent: %s\n", data);
+        printf("Communication time: %.2f microseconds\n", time_taken);
+
+        close(fd[1]);
+
+        wait(NULL);
+    }
+
+    return 0;
+}
