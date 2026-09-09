@@ -1,0 +1,57 @@
+#include <stdio.h>      // Used for printf()
+#include <signal.h>     // Used for signal handling
+#include <unistd.h>     // Used for getpid() and sleep()
+
+// This function is our signal handler
+// It runs whenever a registered signal is received
+void handle_signal(int signal)
+{
+    // Check whether the received signal is SIGINT
+    if (signal == SIGINT)
+    {
+        printf("\nSIGINT received - Ctrl+C pressed.\n");
+    }
+
+    // Check whether the received signal is SIGTERM
+    else if (signal == SIGTERM)
+    {
+        printf("\nSIGTERM received - Termination requested.\n");
+    }
+
+    // Check whether the received signal is SIGUSR1
+    else if (signal == SIGUSR1)
+    {
+        printf("\nSIGUSR1 received - User defined signal.\n");
+    }
+}
+
+int main()
+{
+    // Register the signal handler for SIGINT
+    signal(SIGINT, handle_signal);
+
+    // Register the signal handler for SIGTERM
+    signal(SIGTERM, handle_signal);
+
+    // Register the signal handler for SIGUSR1
+    signal(SIGUSR1, handle_signal);
+
+    // Display that the program has started
+    printf("Signal handling program started.\n");
+
+    // Display the Process ID
+    // getpid() gives the PID of this program
+    printf("Process ID (PID): %d\n", getpid());
+
+    // Keep the program running continuously
+    while (1)
+    {
+        // Display a message every 2 seconds
+        printf("Program is running...\n");
+
+        // Wait for 2 seconds
+        sleep(2);
+    }
+
+    return 0;
+}
