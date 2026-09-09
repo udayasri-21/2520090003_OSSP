@@ -1,0 +1,78 @@
+#include <stdio.h>      // printf(), fgets()
+#include <stdlib.h>     // General functions
+#include <string.h>     // strlen(), strcmp(), strcspn(), memset()
+#include <fcntl.h>      // open(), O_RDONLY, O_WRONLY
+#include <unistd.h>     // read(), write(), close()
+
+// FIFO for Client → Server communication
+#define REQUEST_FIFO "client_to_server"
+
+// FIFO for Server → Client communication
+#define RESPONSE_FIFO "server_to_client"
+
+int main()
+{
+    // Stores message typed by client
+    char message[100];
+
+    // Stores response received from server
+    char response[200];
+
+    // Open Client → Server FIFO for writing
+    // O_WRONLY = Write Only
+    int request_fd = open(REQUEST_FIFO, O_WRONLY);
+
+    // Open Server → Client FIFO for reading
+    // O_RDONLY = Read Only
+    int response_fd = open(RESPONSE_FIFO, O_RDONLY);
+
+    // Display client status
+    printf("Client started.\n");
+
+    // Keep asking for messages
+    while (1)
+    {
+        // Ask user for message
+        printf("Enter message: ");
+
+        // Read message from keyboard
+        fgets(message, sizeof(message), stdin);
+
+        // Remove newline character
+        message[strcspn(message, "\n")] = '\0';
+
+        // If user types exit, stop the client
+        if (strcmp(message, "exit") == 0)
+        {
+            break;
+        }
+
+        // Send message to server
+        // write() sends data
+        // strlen() finds message length
+        write(request_fd, message, strlen(message));
+
+        // Clear response buffer
+        memset(response, 0, sizeof(response));
+
+        // Read response from server
+        // read() receives data
+        int n = read(response_fd, response, sizeof(response) - 1);
+
+        // Check if response was received
+        if (n > 0)
+        {
+            // Add end of string
+            response[n] = '\0';
+
+            // Display server response
+            printf("Server response: %s\n", response);
+        }
+    }
+
+    // Close FIFOs
+    close(request_fd);
+    close(response_fd);
+
+    return 0;
+}
