@@ -1,0 +1,42 @@
+#include <stdio.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+int main()
+{
+    struct stat fileInfo;
+
+    // Create original file
+    FILE *fp = fopen("original.txt", "w");
+    fprintf(fp, "Hello Linux\n");
+    fclose(fp);
+
+    // Get inode information
+    stat("original.txt", &fileInfo);
+
+    printf("Original File Information:\n");
+    printf("Inode Number: %ld\n", fileInfo.st_ino);
+    printf("Number of Links: %ld\n", fileInfo.st_nlink);
+
+    // Create hard link
+    link("original.txt", "hardlink.txt");
+
+    // Create symbolic link
+    symlink("original.txt", "symlink.txt");
+
+    // Get updated information
+    stat("original.txt", &fileInfo);
+
+    printf("\nAfter Creating Hard Link:\n");
+    printf("Inode Number: %ld\n", fileInfo.st_ino);
+    printf("Number of Links: %ld\n", fileInfo.st_nlink);
+
+    // Information about symbolic link
+    lstat("symlink.txt", &fileInfo);
+
+    printf("\nSymbolic Link Information:\n");
+    printf("Inode Number: %ld\n", fileInfo.st_ino);
+    printf("Number of Links: %ld\n", fileInfo.st_nlink);
+
+    return 0;
+}
